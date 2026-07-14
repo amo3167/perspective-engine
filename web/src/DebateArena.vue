@@ -38,7 +38,7 @@
             <div class="text-h4 font-weight-light text-primary mb-4">
               {{ topic || 'Waiting for topic...' }}
             </div>
-            
+
             <div class="d-flex align-center gap-4">
               <v-btn
                 prepend-icon="mdi-play"
@@ -173,7 +173,7 @@
                   {{ turn.timestamp ? new Date(turn.timestamp).toLocaleTimeString() : '' }}
                 </v-card-subtitle>
               </v-card-item>
-              
+
               <v-card-text class="pt-0 pb-4 px-4 text-body-2 line-height-relaxed">
                 <div class="markdown-content" v-html="renderMarkdown(turn.content)"></div>
               </v-card-text>
@@ -268,19 +268,19 @@ const teamConAgents = [
 
 watch(wsMessage, (msg: any) => {
   if (!msg || msg.type !== 'debate_update') return
-  
+
   const dType = msg.debate_type || msg.type
 
   if (dType === 'debate_start') {
     status.value = 'debating'
     topic.value = msg.topic
     transcript.value = []
-    startTimer(msg.time_limit_seconds || 180) 
+    startTimer(msg.time_limit_seconds || 180)
   } else if (dType === 'debate_turn') {
-    const alreadyExists = transcript.value.some(t => 
+    const alreadyExists = transcript.value.some(t =>
       t.agent_id === msg.agent_id && t.turn_index === msg.turn_index
     )
-    
+
     if (!alreadyExists) {
       transcript.value.push({
         agent_id: msg.agent_id,

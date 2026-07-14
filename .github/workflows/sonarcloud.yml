@@ -1,0 +1,41 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for accurate new-code / blame
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest coverage
+
+      - name: Tests with coverage
+        run: |
+          python -m coverage run -m pytest tests/ -q
+          python -m coverage xml -o coverage.xml
+
+      # Skipped until the SONAR_TOKEN repo secret is set, so CI stays green in
+      # the meantime. Once the secret exists, this runs the scan and — via
+      # sonar.qualitygate.wait=true — fails the job if the Quality Gate fails.
+      - name: SonarQube Cloud Scan
+        if: ${{ env.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@v8

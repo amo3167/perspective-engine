@@ -66,7 +66,13 @@ class MeetingPack:
     def proposal_sections(self) -> list[str]:
         return self.template.get(
             "proposal_sections",
-            ["problem_statement", "proposed_solution", "impact_areas", "rollback_strategy", "timeline"],
+            [
+                "problem_statement",
+                "proposed_solution",
+                "impact_areas",
+                "rollback_strategy",
+                "timeline",
+            ],
         )
 
     @property
@@ -83,7 +89,9 @@ class MeetingPack:
     def phase_by_number(self, number: int) -> dict[str, Any] | None:
         return next((p for p in self.phases if p.get("phase_number") == number), None)
 
-    def resolve_roles(self) -> tuple[
+    def resolve_roles(
+        self,
+    ) -> tuple[
         dict[str, dict[str, Any]],
         dict[str, Any] | None,
         dict[str, Any] | None,
@@ -103,14 +111,20 @@ class MeetingPack:
             roles.get("architect")
             or roles.get("decision_maker")
             or next(
-                (a["id"] for a in self.agents if a.get("role") in ("architect", "gatekeeper", "decision_maker")),
+                (
+                    a["id"]
+                    for a in self.agents
+                    if a.get("role") in ("architect", "gatekeeper", "decision_maker")
+                ),
                 None,
             )
         )
 
         facilitator = agent_by_id.get(facilitator_id)
         author = agent_by_id.get(author_id)
-        reviewers = [agent_by_id[rid] for rid in roles.get("reviewers", []) if rid in agent_by_id]
+        reviewers = [
+            agent_by_id[rid] for rid in roles.get("reviewers", []) if rid in agent_by_id
+        ]
         if not reviewers:
             reviewers = [a for a in self.agents if a.get("team") == "REVIEWERS"]
 
@@ -142,7 +156,9 @@ def load_context_handbook(path: str) -> tuple[str, str]:
         if os.path.isfile(readme):
             with open(readme, "r", encoding="utf-8") as f:
                 handbook = f.read()
-            logger.info(f"Loaded handbook README.md ({len(handbook)} bytes) from {path}")
+            logger.info(
+                f"Loaded handbook README.md ({len(handbook)} bytes) from {path}"
+            )
         else:
             md_files = sorted(glob_mod.glob(os.path.join(path, "*.md")))
             listing = "\n".join(f"- {os.path.basename(fp)}" for fp in md_files)
@@ -181,7 +197,9 @@ def load_pack(
     rules_cfg = profiles.get("rules", {})
 
     if template_path.exists():
-        logger.info(f"Loaded meeting template: {template.get('template_name', 'unknown')}")
+        logger.info(
+            f"Loaded meeting template: {template.get('template_name', 'unknown')}"
+        )
 
     domain_handbook = ""
     context_dir = ""

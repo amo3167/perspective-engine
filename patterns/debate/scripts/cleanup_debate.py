@@ -10,7 +10,9 @@ if PE_ROOT not in sys.path:
 from engine.shared_memory import SharedMemory
 from engine.runtime import kill_processes_by_script_name
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger("cleanup_debate")
 
 PREFIX = "meeting:mem:"
@@ -28,7 +30,9 @@ def _parse_redis_key(full_key: str) -> tuple[str, str] | None:
 
 async def kill_node_processes():
     logger.info("Searching for debate processes...")
-    killed_count = kill_processes_by_script_name(["debate_node.py", "debate_orchestrator.py"])
+    killed_count = kill_processes_by_script_name(
+        ["debate_node.py", "debate_orchestrator.py"]
+    )
     logger.info(f"Terminated {killed_count} process(es).")
 
 

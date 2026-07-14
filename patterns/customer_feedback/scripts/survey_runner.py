@@ -9,15 +9,12 @@ Usage:
     python survey_runner.py --survey path/to/survey.json --run-dir output/run_XXX --count 20
 """
 
-import sys
 import os
 import json
 import asyncio
 import logging
 import argparse
 import re
-import random
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +39,9 @@ logging.basicConfig(
 logger = logging.getLogger("survey_runner")
 
 BEDROCK_REGION = os.environ.get("AWS_DEFAULT_REGION", "ap-southeast-2")
-BEDROCK_TIMEOUT = BotoConfig(read_timeout=600, retries={"max_attempts": 2}) if BotoConfig else None
+BEDROCK_TIMEOUT = (
+    BotoConfig(read_timeout=600, retries={"max_attempts": 2}) if BotoConfig else None
+)
 
 
 def _get_bedrock_client():
@@ -83,12 +82,12 @@ def _build_survey_system_prompt(persona: dict[str, Any]) -> str:
         f"Do NOT break character or mention that you are an AI.\n\n"
         f"You MUST respond with ONLY a valid JSON object (no markdown fences, no extra text).\n"
         f"Use this exact schema:\n"
-        f'{{\n'
+        f"{{\n"
         f'  "answers": [\n'
         f'    {{ "question_id": "q1", "value": <your answer> }},\n'
         f'    {{ "question_id": "q2", "value": <your answer> }}\n'
-        f'  ]\n'
-        f'}}\n\n'
+        f"  ]\n"
+        f"}}\n\n"
         f"For **rating** questions: value is an integer within the specified scale.\n"
         f"For **multiple_choice** questions: value is a string (single) or array of strings (if allow_multiple).\n"
         f"For **open** questions: value is a string with your honest response (1-3 sentences).\n\n"
@@ -144,7 +143,9 @@ def _parse_survey_response(raw: str) -> dict[str, Any] | None:
     return None
 
 
-def _tag_survey_response(parsed: dict[str, Any], persona: dict[str, Any]) -> dict[str, Any]:
+def _tag_survey_response(
+    parsed: dict[str, Any], persona: dict[str, Any]
+) -> dict[str, Any]:
     return {
         "persona_id": persona["persona_id"],
         "archetype_id": persona["archetype_id"],
@@ -190,7 +191,10 @@ async def _call_bedrock_survey(
                     modelId=bedrock_model,
                     system=[{"text": system_prompt}],
                     messages=[{"role": "user", "content": [{"text": user_prompt}]}],
-                    inferenceConfig={"maxTokens": max_tokens * 4, "temperature": temperature},
+                    inferenceConfig={
+                        "maxTokens": max_tokens * 4,
+                        "temperature": temperature,
+                    },
                 ),
             )
             raw = resp["output"]["message"]["content"][0]["text"]
@@ -205,7 +209,9 @@ async def _call_bedrock_survey(
         except Exception as e:
             if "Throttling" in str(type(e).__name__) or "ThrottlingException" in str(e):
                 wait = 5 * (attempt + 1)
-                logger.warning(f"[{persona['persona_id']}] Throttled. Waiting {wait}s...")
+                logger.warning(
+                    f"[{persona['persona_id']}] Throttled. Waiting {wait}s..."
+                )
                 await asyncio.sleep(wait)
             else:
                 logger.error(f"[{persona['persona_id']}] Bedrock error: {e}")
@@ -250,7 +256,9 @@ async def run_survey(
         batch = personas[batch_start : batch_start + batch_size]
         batch_num = batch_start // batch_size + 1
         total_batches = (len(personas) + batch_size - 1) // batch_size
-        logger.info(f"Survey batch {batch_num}/{total_batches} ({len(batch)} respondents)")
+        logger.info(
+            f"Survey batch {batch_num}/{total_batches} ({len(batch)} respondents)"
+        )
 
         tasks = [
             _call_bedrock_survey(p, survey, llm_model, temperature, max_tokens)
@@ -267,7 +275,9 @@ async def run_survey(
 
     valid = sum(1 for r in all_responses if not r.get("error"))
     errors = sum(1 for r in all_responses if r.get("error"))
-    logger.info(f"Survey complete: {valid} valid, {errors} errors out of {len(all_responses)}")
+    logger.info(
+        f"Survey complete: {valid} valid, {errors} errors out of {len(all_responses)}"
+    )
 
     responses_path = run_dir / "survey_responses.json"
     responses_path.write_text(json.dumps(all_responses, indent=2), encoding="utf-8")
@@ -280,15 +290,23 @@ async def run_survey(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Survey Runner — distribute survey to customer personas")
+    parser = argparse.ArgumentParser(
+        description="Survey Runner — distribute survey to customer personas"
+    )
     parser.add_argument("--survey", type=str, required=True, help="Path to survey.json")
-    parser.add_argument("--run-dir", type=str, required=True, help="Output run directory")
+    parser.add_argument(
+        "--run-dir", type=str, required=True, help="Output run directory"
+    )
     parser.add_argument("--count", type=int, default=20, help="Number of respondents")
     parser.add_argument("--batch-size", type=int, default=10)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--model", type=str, default=None)
-    parser.add_argument("--models", type=str, default=None,
-                        help="Comma-separated model IDs for round-robin")
+    parser.add_argument(
+        "--models",
+        type=str,
+        default=None,
+        help="Comma-separated model IDs for round-robin",
+    )
     args = parser.parse_args()
 
     responses_path = asyncio.run(

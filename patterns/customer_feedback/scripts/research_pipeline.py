@@ -123,7 +123,8 @@ async def run_research_pipeline(
         logger.info("[DRY RUN] Using template brief")
     else:
         brief_path = await generate_research_brief(
-            feature_text, run_dir,
+            feature_text,
+            run_dir,
             analyst_id="product_owner",
             backend=backend,
             model=model,
@@ -131,7 +132,9 @@ async def run_research_pipeline(
             max_steps=max_steps,
         )
 
-    pipeline_meta["steps"].append({"step": 1, "agent": "product_owner", "output": "research_brief.md"})
+    pipeline_meta["steps"].append(
+        {"step": 1, "agent": "product_owner", "output": "research_brief.md"}
+    )
     log_handoff("product_owner", "marketing_researcher", brief_path, run_dir)
 
     # ------------------------------------------------------------------
@@ -148,12 +151,57 @@ async def run_research_pipeline(
             "title": "Portfolio Dashboard Feedback Survey",
             "intro": "We're developing a new portfolio performance dashboard. Your feedback will shape the final product.",
             "questions": [
-                {"id": "q1", "type": "rating", "text": "How likely are you to use a unified portfolio dashboard?", "scale_min": 1, "scale_max": 5, "scale_labels": ["Not at all likely", "Extremely likely"]},
-                {"id": "q2", "type": "rating", "text": "How satisfied are you with your current portfolio tracking tools?", "scale_min": 1, "scale_max": 5, "scale_labels": ["Very dissatisfied", "Very satisfied"]},
-                {"id": "q3", "type": "multiple_choice", "text": "Which features matter most to you?", "options": ["Real-time data", "Risk metrics", "Strategy comparison", "Mobile access", "Export/API"], "allow_multiple": True},
-                {"id": "q4", "type": "multiple_choice", "text": "How do you primarily access trading tools?", "options": ["Desktop browser", "Mobile app", "Both equally", "API/programmatic"], "allow_multiple": False},
-                {"id": "q5", "type": "open", "text": "What concerns, if any, do you have about this new dashboard?"},
-                {"id": "q6", "type": "open", "text": "What feature or improvement would make this dashboard indispensable for you?"},
+                {
+                    "id": "q1",
+                    "type": "rating",
+                    "text": "How likely are you to use a unified portfolio dashboard?",
+                    "scale_min": 1,
+                    "scale_max": 5,
+                    "scale_labels": ["Not at all likely", "Extremely likely"],
+                },
+                {
+                    "id": "q2",
+                    "type": "rating",
+                    "text": "How satisfied are you with your current portfolio tracking tools?",
+                    "scale_min": 1,
+                    "scale_max": 5,
+                    "scale_labels": ["Very dissatisfied", "Very satisfied"],
+                },
+                {
+                    "id": "q3",
+                    "type": "multiple_choice",
+                    "text": "Which features matter most to you?",
+                    "options": [
+                        "Real-time data",
+                        "Risk metrics",
+                        "Strategy comparison",
+                        "Mobile access",
+                        "Export/API",
+                    ],
+                    "allow_multiple": True,
+                },
+                {
+                    "id": "q4",
+                    "type": "multiple_choice",
+                    "text": "How do you primarily access trading tools?",
+                    "options": [
+                        "Desktop browser",
+                        "Mobile app",
+                        "Both equally",
+                        "API/programmatic",
+                    ],
+                    "allow_multiple": False,
+                },
+                {
+                    "id": "q5",
+                    "type": "open",
+                    "text": "What concerns, if any, do you have about this new dashboard?",
+                },
+                {
+                    "id": "q6",
+                    "type": "open",
+                    "text": "What feature or improvement would make this dashboard indispensable for you?",
+                },
             ],
         }
         survey_path = run_dir / "survey.json"
@@ -161,7 +209,8 @@ async def run_research_pipeline(
         logger.info("[DRY RUN] Using template survey")
     else:
         survey_path = await design_survey(
-            brief_path, run_dir,
+            brief_path,
+            run_dir,
             analyst_id="marketing_researcher",
             backend=backend,
             model=model,
@@ -169,7 +218,9 @@ async def run_research_pipeline(
             max_steps=max_steps,
         )
 
-    pipeline_meta["steps"].append({"step": 2, "agent": "marketing_researcher", "output": "survey.json"})
+    pipeline_meta["steps"].append(
+        {"step": 2, "agent": "marketing_researcher", "output": "survey.json"}
+    )
     log_handoff("marketing_researcher", "customers", survey_path, run_dir)
 
     # ------------------------------------------------------------------
@@ -187,7 +238,9 @@ async def run_research_pipeline(
 
         profiles = load_profiles()
         personas = generate_personas(count, profiles=profiles, seed=seed)
-        survey_data_loaded = json.loads((run_dir / "survey.json").read_text(encoding="utf-8"))
+        survey_data_loaded = json.loads(
+            (run_dir / "survey.json").read_text(encoding="utf-8")
+        )
         questions = survey_data_loaded.get("questions", [])
         dry_responses: list[dict[str, Any]] = []
         for persona in personas:
@@ -198,26 +251,35 @@ async def run_research_pipeline(
                 elif q["type"] == "multiple_choice":
                     opts = q.get("options", ["N/A"])
                     if q.get("allow_multiple"):
-                        val = random.sample(opts, k=min(random.randint(1, 3), len(opts)))
+                        val = random.sample(
+                            opts, k=min(random.randint(1, 3), len(opts))
+                        )
                     else:
                         val = random.choice(opts)
                 else:
                     val = f"[Dry run response from {persona['archetype_label']}]"
                 answers.append({"question_id": q["id"], "value": val})
-            dry_responses.append({
-                "persona_id": persona["persona_id"],
-                "archetype_id": persona["archetype_id"],
-                "archetype_label": persona["archetype_label"],
-                "answers": answers,
-                "error": False,
-            })
+            dry_responses.append(
+                {
+                    "persona_id": persona["persona_id"],
+                    "archetype_id": persona["archetype_id"],
+                    "archetype_label": persona["archetype_label"],
+                    "answers": answers,
+                    "error": False,
+                }
+            )
         responses_path = run_dir / "survey_responses.json"
         responses_path.write_text(json.dumps(dry_responses, indent=2), encoding="utf-8")
-        (run_dir / "personas.json").write_text(json.dumps(personas, indent=2), encoding="utf-8")
-        logger.info(f"[DRY RUN] Generated {len(dry_responses)} template survey responses")
+        (run_dir / "personas.json").write_text(
+            json.dumps(personas, indent=2), encoding="utf-8"
+        )
+        logger.info(
+            f"[DRY RUN] Generated {len(dry_responses)} template survey responses"
+        )
     else:
         responses_path = await run_survey(
-            survey_path, run_dir,
+            survey_path,
+            run_dir,
             count=count,
             batch_size=batch_size,
             seed=seed,
@@ -225,7 +287,9 @@ async def run_research_pipeline(
             models=models,
         )
 
-    pipeline_meta["steps"].append({"step": 3, "agent": "customers", "output": "survey_responses.json"})
+    pipeline_meta["steps"].append(
+        {"step": 3, "agent": "customers", "output": "survey_responses.json"}
+    )
     log_handoff("customers", "marketing_researcher", responses_path, run_dir)
 
     # ------------------------------------------------------------------
@@ -258,7 +322,9 @@ async def run_research_pipeline(
             max_steps=max_steps,
         )
 
-    pipeline_meta["steps"].append({"step": 4, "agent": "marketing_researcher", "output": "marketing_report.md"})
+    pipeline_meta["steps"].append(
+        {"step": 4, "agent": "marketing_researcher", "output": "marketing_report.md"}
+    )
     log_handoff("marketing_researcher", "product_owner", mkt_report_path, run_dir)
 
     # ------------------------------------------------------------------
@@ -272,6 +338,7 @@ async def run_research_pipeline(
 
     if dry_run:
         from po_analyst import DRY_RUN_REPORT
+
         analysis_path = run_dir / "po_analysis.md"
         header = (
             f"# Product Owner Analysis\n\n"
@@ -290,10 +357,14 @@ async def run_research_pipeline(
             max_steps=max_steps,
         )
 
-    pipeline_meta["steps"].append({"step": 5, "agent": "product_owner", "output": "po_analysis.md"})
+    pipeline_meta["steps"].append(
+        {"step": 5, "agent": "product_owner", "output": "po_analysis.md"}
+    )
 
     pipeline_meta["completed"] = datetime.now().isoformat()
-    (run_dir / "pipeline_meta.json").write_text(json.dumps(pipeline_meta, indent=2), encoding="utf-8")
+    (run_dir / "pipeline_meta.json").write_text(
+        json.dumps(pipeline_meta, indent=2), encoding="utf-8"
+    )
 
     logger.info("")
     logger.info("=" * 70)
@@ -310,6 +381,7 @@ async def run_research_pipeline(
 
 def main():
     import warnings
+
     warnings.warn(
         "research_pipeline.py is deprecated. Use: feedback_simulator.py --mode survey",
         DeprecationWarning,
@@ -320,31 +392,72 @@ def main():
     parser = argparse.ArgumentParser(
         description="Research Pipeline (DEPRECATED — use feedback_simulator.py --mode survey)"
     )
-    parser.add_argument("--feature", type=str, required=True,
-                        help="Path to feature announcement text file")
-    parser.add_argument("--count", type=int, default=20,
-                        help="Number of survey respondents (default: 20)")
-    parser.add_argument("--batch-size", type=int, default=10,
-                        help="Concurrent LLM calls per batch (default: 10)")
-    parser.add_argument("--seed", type=int, default=None,
-                        help="Random seed for reproducible persona generation")
-    parser.add_argument("--backend", type=str, default="bedrock",
-                        choices=["gemini", "bedrock"],
-                        help="LLM backend for agent calls (default: bedrock)")
-    parser.add_argument("--model", type=str, default=None,
-                        help="LLM model override for all agents")
-    parser.add_argument("--models", type=str, default=None,
-                        help="Comma-separated model IDs for customer survey round-robin")
-    parser.add_argument("--agentic", action="store_true", default=True,
-                        help="Enable agentic mode with tool calling (default: True)")
-    parser.add_argument("--no-agentic", dest="agentic", action="store_false",
-                        help="Disable agentic mode for all agents")
-    parser.add_argument("--max-steps", type=int, default=5,
-                        help="Max ReAct steps per agent (default: 5)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Use template outputs without calling LLMs")
-    parser.add_argument("--region", type=str, default=None,
-                        help="AWS region for bedrock backend")
+    parser.add_argument(
+        "--feature",
+        type=str,
+        required=True,
+        help="Path to feature announcement text file",
+    )
+    parser.add_argument(
+        "--count",
+        type=int,
+        default=20,
+        help="Number of survey respondents (default: 20)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=10,
+        help="Concurrent LLM calls per batch (default: 10)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed for reproducible persona generation",
+    )
+    parser.add_argument(
+        "--backend",
+        type=str,
+        default="bedrock",
+        choices=["gemini", "bedrock"],
+        help="LLM backend for agent calls (default: bedrock)",
+    )
+    parser.add_argument(
+        "--model", type=str, default=None, help="LLM model override for all agents"
+    )
+    parser.add_argument(
+        "--models",
+        type=str,
+        default=None,
+        help="Comma-separated model IDs for customer survey round-robin",
+    )
+    parser.add_argument(
+        "--agentic",
+        action="store_true",
+        default=True,
+        help="Enable agentic mode with tool calling (default: True)",
+    )
+    parser.add_argument(
+        "--no-agentic",
+        dest="agentic",
+        action="store_false",
+        help="Disable agentic mode for all agents",
+    )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=5,
+        help="Max ReAct steps per agent (default: 5)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Use template outputs without calling LLMs",
+    )
+    parser.add_argument(
+        "--region", type=str, default=None, help="AWS region for bedrock backend"
+    )
     args = parser.parse_args()
 
     if args.region:
@@ -361,8 +474,12 @@ def main():
         sys.exit(1)
 
     mode_label = "DRY RUN" if args.dry_run else ("AGENTIC" if args.agentic else "LIVE")
-    logger.info(f"[{mode_label}] Feature: {feature_path.name} ({len(feature_text)} chars)")
-    logger.info(f"Pipeline: PO brief -> Marketing survey -> {args.count} customers -> Marketing compile -> PO analysis")
+    logger.info(
+        f"[{mode_label}] Feature: {feature_path.name} ({len(feature_text)} chars)"
+    )
+    logger.info(
+        f"Pipeline: PO brief -> Marketing survey -> {args.count} customers -> Marketing compile -> PO analysis"
+    )
 
     run_dir = asyncio.run(
         run_research_pipeline(

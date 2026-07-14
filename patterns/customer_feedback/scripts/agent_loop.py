@@ -20,7 +20,11 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from agent_tools import build_tool_config, build_tool_result_message, get_tool_descriptions
+from agent_tools import (
+    build_tool_config,
+    build_tool_result_message,
+    get_tool_descriptions,
+)
 
 logger = logging.getLogger("agent_loop")
 
@@ -34,6 +38,7 @@ def _sanitize_assistant_msg(msg: dict[str, Any]) -> dict[str, Any]:
         if tu and "name" in tu:
             tu["name"] = _TOOL_NAME_INVALID.sub("", tu["name"].strip())
     return msg
+
 
 RESPONSE_SCHEMA = """\
 You MUST respond with ONLY a valid JSON object (no markdown fences, no extra text).
@@ -99,10 +104,14 @@ def _build_system_prompt(persona: dict[str, Any]) -> str:
         )
     else:
         lines.append("")
-        lines.append("You have no tools available. Rely on your own knowledge and instincts.")
+        lines.append(
+            "You have no tools available. Rely on your own knowledge and instincts."
+        )
 
     lines.append("")
-    lines.append("Stay fully in character. Do NOT break character or mention that you are an AI.")
+    lines.append(
+        "Stay fully in character. Do NOT break character or mention that you are an AI."
+    )
     lines.append("Provide authentic, varied feedback as this specific person would.")
     lines.append("")
     lines.append(
@@ -184,11 +193,14 @@ class AgentPersonaRunner:
 
     def _get_client(self):
         if self._bedrock is None:
-            import boto3, os
+            import boto3
+            import os
             from botocore.config import Config as BotoConfig
+
             region = os.environ.get("AWS_DEFAULT_REGION", "ap-southeast-2")
             self._bedrock = boto3.client(
-                "bedrock-runtime", region_name=region,
+                "bedrock-runtime",
+                region_name=region,
                 config=BotoConfig(read_timeout=600, retries={"max_attempts": 2}),
             )
         return self._bedrock
@@ -234,8 +246,13 @@ class AgentPersonaRunner:
             except Exception as e:
                 err_str = str(e)
                 logger.error(f"[{pid}] Bedrock error step {step}: {e}")
-                if "toolUse.name" in err_str and "failed to satisfy constraint" in err_str:
-                    logger.warning(f"[{pid}] Malformed tool name in history — scrubbing and retrying")
+                if (
+                    "toolUse.name" in err_str
+                    and "failed to satisfy constraint" in err_str
+                ):
+                    logger.warning(
+                        f"[{pid}] Malformed tool name in history — scrubbing and retrying"
+                    )
                     for msg in self.messages:
                         _sanitize_assistant_msg(msg)
                 await asyncio.sleep(2)
@@ -246,16 +263,16 @@ class AgentPersonaRunner:
             assistant_msg = _sanitize_assistant_msg(resp["output"]["message"])
             self.messages.append(assistant_msg)
 
-            self.trace.append({
-                "step": step,
-                "stop_reason": stop_reason,
-                "latency_ms": latency,
-            })
+            self.trace.append(
+                {
+                    "step": step,
+                    "stop_reason": stop_reason,
+                    "latency_ms": latency,
+                }
+            )
 
             if stop_reason == "tool_use":
-                tool_blocks = [
-                    c for c in assistant_msg["content"] if c.get("toolUse")
-                ]
+                tool_blocks = [c for c in assistant_msg["content"] if c.get("toolUse")]
                 result = build_tool_result_message(tool_blocks)
                 self.messages.append(result["message"])
                 self.tool_calls += len(tool_blocks)
@@ -290,13 +307,19 @@ class AgentPersonaRunner:
                         model=self.model,
                         skills=self.skills,
                     )
-                logger.warning(f"[{pid}] Step {step}: end_turn but invalid JSON, forcing retry")
+                logger.warning(
+                    f"[{pid}] Step {step}: end_turn but invalid JSON, forcing retry"
+                )
 
         logger.warning(f"[{pid}] Max steps reached, forcing final answer")
-        self.messages.append({
-            "role": "user",
-            "content": [{"text": "Please respond now with ONLY the JSON feedback object."}],
-        })
+        self.messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {"text": "Please respond now with ONLY the JSON feedback object."}
+                ],
+            }
+        )
         try:
             resp = await self._converse(include_tools=False)
             assistant_msg = resp["output"]["message"]

@@ -4,7 +4,6 @@ import uvicorn
 import logging
 import argparse
 import httpx
-import json
 import asyncio
 from datetime import datetime
 from typing import List, Optional
@@ -43,7 +42,9 @@ agent_skills = []
 agent_model = "gemini/gemini-2.5-flash-preview-04-17"
 agent_output_dir = "agents/unknown"
 
-DEBATE_BROADCAST_URL = os.environ.get("PERSPECTIVE_ENGINE_DEBATE_BACKEND_URL", "").strip()
+DEBATE_BROADCAST_URL = os.environ.get(
+    "PERSPECTIVE_ENGINE_DEBATE_BACKEND_URL", ""
+).strip()
 
 
 async def notify_backend(payload: dict):
@@ -92,7 +93,9 @@ async def debate_turn(req: DebateTurnRequest):
     try:
         search_result = web_search(f"{topic} latest news analysis 2026", max_results=3)
         if search_result and "error" not in search_result.lower():
-            search_context = f"\n\n[Research Context from Web Search]:\n{search_result[:1500]}"
+            search_context = (
+                f"\n\n[Research Context from Web Search]:\n{search_result[:1500]}"
+            )
             logger.info(f"Web search returned {len(search_result)} chars of context.")
     except Exception as se:
         logger.warning(f"Web search skipped: {se}")
@@ -100,7 +103,9 @@ async def debate_turn(req: DebateTurnRequest):
     rules = await mem.get("shared", "global_rules")
     tips = ""
     if rules and "general_tips" in rules:
-        tips = f"\nGLOBAL RULES (Apply immediately):\n- " + "\n- ".join(rules["general_tips"])
+        tips = "\nGLOBAL RULES (Apply immediately):\n- " + "\n- ".join(
+            rules["general_tips"]
+        )
 
     # 3. Build LLM prompt
     if req.insight_only:
@@ -141,8 +146,13 @@ async def debate_turn(req: DebateTurnRequest):
             messages.append({"role": "user", "content": f"[{name}]: {content}"})
 
     # Add a final user prompt to force engagement
-    if any(msg.get("name") == "J_Justice" for msg in transcript) and agent_id == "J_Justice":
-        logger.info("J_Justice already delivered a verdict. Ignoring emergency duplicate call.")
+    if (
+        any(msg.get("name") == "J_Justice" for msg in transcript)
+        and agent_id == "J_Justice"
+    ):
+        logger.info(
+            "J_Justice already delivered a verdict. Ignoring emergency duplicate call."
+        )
         return {"status": "success", "message": "already_done"}
 
     # Determine dynamic time limit for the prompt
@@ -153,14 +163,33 @@ async def debate_turn(req: DebateTurnRequest):
 
     if req.captain_insights:
         insights_str = "\n".join([f"- {i}" for i in req.captain_insights])
-        messages.append({"role": "user", "content": f"CAPTAIN BRIEFING: Your team members generated the following tactical insights behind closed doors:\n{insights_str}\n\nSynthesize these into a powerful, unified final answer for your team (under 150 words). Break their arguments apart."})
+        messages.append(
+            {
+                "role": "user",
+                "content": f"CAPTAIN BRIEFING: Your team members generated the following tactical insights behind closed doors:\n{insights_str}\n\nSynthesize these into a powerful, unified final answer for your team (under 150 words). Break their arguments apart.",
+            }
+        )
     elif len(messages) == 1:
-        messages.append({"role": "user", "content": f"You are the first speaker. Open the debate on: {topic}"})
+        messages.append(
+            {
+                "role": "user",
+                "content": f"You are the first speaker. Open the debate on: {topic}",
+            }
+        )
     elif agent_id == "J_Justice":
-        messages.append({"role": "user", "content": "Deliver the final JUDGMENT and VERDICT based on the debate transcript above. Be balanced but firm."})
+        messages.append(
+            {
+                "role": "user",
+                "content": "Deliver the final JUDGMENT and VERDICT based on the debate transcript above. Be balanced but firm.",
+            }
+        )
     else:
-        messages.append({"role": "user", "content": f"It is now your turn. Respond to the previous arguments efficiently. The clock is ticking toward the {time_limit_mins}-minute limit."})
-    
+        messages.append(
+            {
+                "role": "user",
+                "content": f"It is now your turn. Respond to the previous arguments efficiently. The clock is ticking toward the {time_limit_mins}-minute limit.",
+            }
+        )
 
     # 4. Call LLM with retries
     # Judge needs more output room for full verdict; captain synthesis also benefits
@@ -170,7 +199,9 @@ async def debate_turn(req: DebateTurnRequest):
     # Judge/captain verdicts should be substantial — retry if suspiciously short
     min_acceptable_chars = 300 if (is_judge or is_captain_synth) else 20
 
-    logger.info(f"Calling LLM model='{agent_model}' for topic: {topic[:60]}... (max_tokens={token_limit})")
+    logger.info(
+        f"Calling LLM model='{agent_model}' for topic: {topic[:60]}... (max_tokens={token_limit})"
+    )
     content = None
 
     for attempt in range(3):
@@ -183,7 +214,9 @@ async def debate_turn(req: DebateTurnRequest):
             )
             raw = resp.choices[0].message.content
             finish_reason = getattr(resp.choices[0], "finish_reason", None) or "unknown"
-            logger.info(f"Attempt {attempt+1}: finish_reason={finish_reason}, raw_len={len(str(raw))} chars.")
+            logger.info(
+                f"Attempt {attempt + 1}: finish_reason={finish_reason}, raw_len={len(str(raw))} chars."
+            )
             if raw and len(str(raw).strip()) > 20:
                 candidate = str(raw).strip()
                 if len(candidate) < min_acceptable_chars and attempt < 2:
@@ -193,11 +226,15 @@ async def debate_turn(req: DebateTurnRequest):
                     await asyncio.sleep(2)
                     continue
                 content = candidate
-                logger.info(f"LLM success on attempt {attempt+1}: {len(content)} chars.")
+                logger.info(
+                    f"LLM success on attempt {attempt + 1}: {len(content)} chars."
+                )
                 break
-            logger.warning(f"Attempt {attempt+1}: empty/short response ({len(str(raw))} chars).")
+            logger.warning(
+                f"Attempt {attempt + 1}: empty/short response ({len(str(raw))} chars)."
+            )
         except Exception as e:
-            logger.error(f"LLM error (attempt {attempt+1}): {str(e)}")
+            logger.error(f"LLM error (attempt {attempt + 1}): {str(e)}")
             await asyncio.sleep(3)
 
     if not content:
@@ -211,9 +248,13 @@ async def debate_turn(req: DebateTurnRequest):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(history_path, "a", encoding="utf-8") as hf:
             if req.insight_only:
-                hf.write(f"### Turn {req.turn_index} — TACTICAL INSIGHT ({timestamp})\n\n")
+                hf.write(
+                    f"### Turn {req.turn_index} — TACTICAL INSIGHT ({timestamp})\n\n"
+                )
             elif req.captain_insights:
-                hf.write(f"### Turn {req.turn_index} — CAPTAIN SYNTHESIS ({timestamp})\n\n")
+                hf.write(
+                    f"### Turn {req.turn_index} — CAPTAIN SYNTHESIS ({timestamp})\n\n"
+                )
             else:
                 hf.write(f"### Turn {req.turn_index} — {timestamp}\n\n")
             hf.write(f"**Topic:** {topic}\n\n")
@@ -224,7 +265,9 @@ async def debate_turn(req: DebateTurnRequest):
 
     # 6. Handle Insight Only Mode
     if req.insight_only:
-        logger.info(f"Insight generated ({len(content)} chars). Returning to coordinator silently.")
+        logger.info(
+            f"Insight generated ({len(content)} chars). Returning to coordinator silently."
+        )
         return {"status": "success", "agent_id": agent_id, "content": content}
 
     # 7. Update transcript in Redis (Public Turns Only)
@@ -233,13 +276,15 @@ async def debate_turn(req: DebateTurnRequest):
         latest_data = debate_data
 
     current_transcript = latest_data.get("transcript", [])
-    
+
     # Prefix Team Synthesis if needed
     display_content = content
     if req.captain_insights:
         display_content = f"**[Team Synthesis]**\n{content}"
-        
-    current_transcript.append({"role": "assistant", "name": agent_id, "content": display_content})
+
+    current_transcript.append(
+        {"role": "assistant", "name": agent_id, "content": display_content}
+    )
     latest_data["transcript"] = current_transcript
 
     ref_parts = req.context_ref.split(":")
@@ -248,29 +293,43 @@ async def debate_turn(req: DebateTurnRequest):
     logger.info(f"Response saved ({len(display_content)} chars). Passing baton...")
 
     # 8. WebSocket Broadcast: Turn
-    asyncio.create_task(notify_backend({
-        "debate_type": "debate_turn",
-        "agent_id": agent_id,
-        "content": display_content,
-        "round": req.round,
-        "turn_index": req.turn_index,
-        "context_ref": req.context_ref,
-        "timestamp": datetime.now().isoformat()
-    }))
+    asyncio.create_task(
+        notify_backend(
+            {
+                "debate_type": "debate_turn",
+                "agent_id": agent_id,
+                "content": display_content,
+                "round": req.round,
+                "turn_index": req.turn_index,
+                "context_ref": req.context_ref,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
+    )
 
     # 6. Pass baton to next agent
     if req.next_urls:
         next_target = req.next_urls[0]
         remaining_chain = req.next_urls[1:]
         logger.info(f"Handing off to {next_target}")
-        asyncio.create_task(pass_baton(next_target, req.context_ref, req.round, req.turn_index + 1, remaining_chain))
+        asyncio.create_task(
+            pass_baton(
+                next_target,
+                req.context_ref,
+                req.round,
+                req.turn_index + 1,
+                remaining_chain,
+            )
+        )
     else:
         logger.info("=== DEBATE CHAIN COMPLETED ===")
 
     return {"status": "success", "agent_id": agent_id, "content_length": len(content)}
 
 
-async def pass_baton(url: str, ref: str, round_num: int, next_idx: int, remaining: List[str]):
+async def pass_baton(
+    url: str, ref: str, round_num: int, next_idx: int, remaining: List[str]
+):
     await asyncio.sleep(5)
     try:
         async with httpx.AsyncClient() as client:
@@ -280,9 +339,9 @@ async def pass_baton(url: str, ref: str, round_num: int, next_idx: int, remainin
                     "context_ref": ref,
                     "round": round_num,
                     "turn_index": next_idx,
-                    "next_urls": remaining
+                    "next_urls": remaining,
                 },
-                timeout=120.0
+                timeout=120.0,
             )
     except Exception as e:
         logger.error(f"Failed baton to {url}: {e}")
@@ -302,8 +361,10 @@ if __name__ == "__main__":
     agent_soul = args.soul
     agent_skills = args.skills.split(",") if args.skills else []
     agent_model = args.model if args.model else DEFAULT_DEBATE_MODEL
-    agent_output_dir = args.output_dir if args.output_dir else os.path.join(
-        PE_ROOT, "patterns", "debate", "runs", "adhoc", agent_id
+    agent_output_dir = (
+        args.output_dir
+        if args.output_dir
+        else os.path.join(PE_ROOT, "patterns", "debate", "runs", "adhoc", agent_id)
     )
 
     # Configure file-based logging per agent
@@ -316,10 +377,12 @@ if __name__ == "__main__":
         format=f"%(asctime)s - [{agent_id}] - %(levelname)s - %(message)s",
         handlers=[
             logging.FileHandler(log_path, encoding="utf-8"),
-            logging.StreamHandler()
-        ]
+            logging.StreamHandler(),
+        ],
     )
     logger = logging.getLogger("debate_node")
-    logger.info(f"Starting {agent_id} | port={args.port} | model={agent_model} | soul={agent_soul[:60]}...")
+    logger.info(
+        f"Starting {agent_id} | port={args.port} | model={agent_model} | soul={agent_soul[:60]}..."
+    )
 
     uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="warning")

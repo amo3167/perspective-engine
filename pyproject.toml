@@ -38,7 +38,9 @@ include = ["engine*"]
 # engine.* modules, so their imports are intentionally not at the top of file.
 "engine/node.py" = ["E402"]
 "engine/orchestrator.py" = ["E402"]
-"patterns/debate/scripts/debate_orchestrator.py" = ["E402"]
+# Example/pattern scripts bootstrap sys.path before importing and use loose
+# script-style conventions; grandfather those rules here (engine/ stays strict).
+"patterns/**" = ["E402", "E741"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

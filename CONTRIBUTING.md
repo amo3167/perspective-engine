@@ -37,9 +37,31 @@ For engine changes:
 - **Testing**: Unit tests for the orchestrator phases and agent node endpoints
 - **Pack validation**: A CLI tool to validate meeting pack JSON files before running
 
+## Development setup
+
+Install the dev tooling and the git pre-commit hook:
+
+```bash
+pip install -e ".[dev]"     # ruff, pytest, coverage
+pip install pre-commit
+pre-commit install          # run linters/formatters automatically on commit
+```
+
+Run the checks the same way CI does:
+
+```bash
+pre-commit run --all-files  # ruff check + ruff-format + hygiene hooks
+pytest                      # unit tests
+```
+
+Every push and PR runs CI (`pre-commit`, `pytest`, pack validation) plus a
+SonarCloud quality-gate scan.
+
 ## Code Style
 
 - Python 3.11+ with type hints
+- Formatting and linting are enforced by **ruff** (config in `pyproject.toml`); run
+  `pre-commit run --all-files` before pushing
 - Use `logging` for all output (not `print`)
 - Keep functions focused and pure when possible
 
