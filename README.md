@@ -1,5 +1,8 @@
 # Perspective Engine
 
+[![CI](https://github.com/amo3167/perspective-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/amo3167/perspective-engine/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 **Multi-agent meeting simulation where AI personas debate your decisions — then a separate AI reviews whether they made up their evidence.**
 
 <!-- TODO: Replace with actual demo GIF -->
