@@ -1,0 +1,84 @@
+{
+  "template_name": "should_we_open_source",
+  "description": "Strategic decision meeting: should we open-source our internal multi-agent simulation tool?",
+
+  "roles": {
+    "facilitator": "strategy-facilitator",
+    "author": "innovation-advocate",
+    "decision_maker": "engineering-director",
+    "senior_advisor": "strategic-advisor",
+    "reviewers": [
+      "community-lead",
+      "security-reviewer",
+      "skeptical-engineer",
+      "product-owner"
+    ]
+  },
+
+  "phases": [
+    {
+      "id": "proposal",
+      "label": "Release Proposal",
+      "phase_number": 1,
+      "actor": "author",
+      "expected_type": "PROPOSAL_SUBMISSION",
+      "prompt": "Write the case for open-sourcing your multi-agent simulation tool.\n\nTOPIC: ${topic}\n\nIMPORTANT: Before drafting, use the read_reference_file tool to read available reference documents.\n\nSubmit a PROPOSAL_SUBMISSION with a release_plan containing ALL of these sections: ${proposal_sections_csv}.\n\nPresent a balanced, evidence-backed case."
+    },
+    {
+      "id": "discussion",
+      "label": "Stakeholder Discussion",
+      "phase_number": 2,
+      "actor": "all_reviewers",
+      "participants": ["reviewers", "decision_maker", "senior_advisor"],
+      "max_turns": 20
+    },
+    {
+      "id": "synthesis",
+      "label": "Revised Approach",
+      "phase_number": 3,
+      "actor": "author",
+      "expected_type": "PROPOSAL_REVISION",
+      "prompt": "The discussion phase is complete. Read the full transcript and produce a PROPOSAL_REVISION that:\n1. Addresses the quality and readiness concerns\n2. Incorporates community and security suggestions\n3. Proposes concrete next steps\n4. Flags unresolved risks\n\nInclude updated_release_plan and feedback_addressed sections."
+    },
+    {
+      "id": "decision",
+      "label": "Leadership Decision",
+      "phase_number": 4,
+      "actor": "decision_maker",
+      "expected_type": "LEADERSHIP_DECISION",
+      "prompt": "The author has submitted a revised release plan.\nRead the full transcript and issue your LEADERSHIP_DECISION.\nDecision must be RELEASE, CONDITIONAL, or HOLD.\nInclude rationale, conditions (if CONDITIONAL), and recommendations.",
+      "follow_up": {
+        "actor": "facilitator",
+        "expected_type": "MEETING_NOTES",
+        "prompt": "The meeting is now complete. Read the full transcript and produce MEETING_NOTES.\nAll fields are REQUIRED and must not be empty arrays:\n- executive_summary, key_concerns, recommended_messaging, leadership_decision, decisions, action_items, risk_register, audit_trail."
+      }
+    },
+    {
+      "id": "final_review",
+      "label": "Final Review",
+      "phase_number": 5,
+      "actor": "reviewer_llm",
+      "model": "autobbs-smart-agent",
+      "expected_type": "FINAL_REVIEW"
+    }
+  ],
+
+  "proposal_sections": [
+    "what_we_built",
+    "value_proposition",
+    "perceived_risks",
+    "proposed_audience",
+    "messaging_strategy",
+    "rollout_approach",
+    "pros_and_cons",
+    "future_vision",
+    "authors_recommendation",
+    "evidence"
+  ],
+
+  "context": "reference/",
+
+  "agents": "profiles.json",
+  "prompts": "agent_prompts.json",
+  "schemas": "message_schemas.json"
+}

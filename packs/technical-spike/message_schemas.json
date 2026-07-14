@@ -1,0 +1,96 @@
+{
+  "_description": "Canonical JSON schemas for technical spike consensus meetings.",
+  "COMMENT": {
+    "message_type": "COMMENT",
+    "points": ["concise technical observation — max 3 bullets"]
+  },
+  "AGREE": {
+    "message_type": "AGREE",
+    "points": ["what you agree with and why"]
+  },
+  "CHANGE_REQUEST": {
+    "message_type": "CHANGE_REQUEST",
+    "changes": [
+      {
+        "requirement": "what must change",
+        "justification": "why it matters technically",
+        "severity": "HIGH | MEDIUM | LOW"
+      }
+    ]
+  },
+  "DISAGREE": {
+    "message_type": "DISAGREE",
+    "severity": "HIGH | MEDIUM | LOW",
+    "blocker_description": "technical concern and why it blocks",
+    "required_changes": ["concrete fix required"]
+  },
+  "PROPOSAL_SUBMISSION": {
+    "message_type": "PROPOSAL_SUBMISSION",
+    "spike_document": {
+      "title": "Spike title",
+      "problem_statement": "What problem are we solving",
+      "proposed_solution": "Technical approach",
+      "impact_areas": "What systems/teams are affected",
+      "rollback_strategy": "How to undo if it goes wrong",
+      "timeline": "Implementation timeline"
+    }
+  },
+  "PROPOSAL_REVISION": {
+    "message_type": "PROPOSAL_REVISION",
+    "updated_spike_document": {
+      "title": "Updated title",
+      "problem_statement": "Refined problem statement",
+      "proposed_solution": "Revised approach",
+      "impact_areas": "Updated impact assessment",
+      "rollback_strategy": "Improved rollback plan",
+      "timeline": "Revised timeline"
+    },
+    "feedback_addressed": ["how each piece of feedback was handled"]
+  },
+  "ARCHITECT_APPROVAL": {
+    "message_type": "ARCHITECT_APPROVAL",
+    "decision": "APPROVED | CONDITIONAL | REJECTED",
+    "rationale": ["reason for the decision"],
+    "conditions": ["requirement for CONDITIONAL decisions"]
+  },
+  "MEETING_NOTES": {
+    "message_type": "MEETING_NOTES",
+    "executive_summary": "2-3 sentence summary",
+    "key_objections": ["major concern raised"],
+    "accepted_compromises": ["change accepted by the author"],
+    "decisions": ["concrete decision"],
+    "audit_trail": [
+      {"agent": "who", "action": "what", "outcome": "result"}
+    ]
+  },
+  "FINAL_REVIEW": {
+    "message_type": "FINAL_REVIEW",
+    "overall_assessment": "2-3 sentence verdict",
+    "decision_quality": "Was the decision sound?",
+    "process_quality": {
+      "facilitator_effectiveness": "How well was the meeting managed?",
+      "agent_utilization": {
+        "turns_per_agent": {"agent-id": "N (X%)"},
+        "dominant": ["agent-id — reason"],
+        "underutilized": ["agent-id — reason"]
+      },
+      "discussion_balance": "Was the discussion balanced?"
+    },
+    "strengths": ["what the group got right"],
+    "blind_spots": ["what was missed"],
+    "meta_observations": "Self-referential patterns",
+    "evidence_quality": {
+      "fabricated_or_suspicious": [
+        {"claim": "the claim", "agent": "who", "turn": 0, "concern": "why suspect"}
+      ],
+      "well_used": [
+        {"claim": "the claim", "agent": "who", "verdict": "why credible"}
+      ]
+    },
+    "recommendations": [
+      {"action": "improvement", "owner": "who", "timing": "pre|during|post-execution", "priority": "HIGH|MEDIUM|LOW"}
+    ],
+    "confidence_score": "1-10",
+    "confidence_gap": "What would raise the score?"
+  }
+}

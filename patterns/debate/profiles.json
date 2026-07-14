@@ -1,0 +1,97 @@
+{
+  "version": "3.0.0",
+  "backend": "litellm",
+  "litellm": {
+    "default_model": "bedrock/mistral.mistral-large-3-675b-instruct",
+    "model_map": {
+      "smart-agent": "bedrock/mistral.mistral-large-3-675b-instruct",
+      "fast-agent": "bedrock/amazon.nova-pro-v1:0",
+      "reasoning-agent": "bedrock/deepseek.v3.2",
+      "creative-agent": "bedrock/moonshotai.kimi-k2.5"
+    }
+  },
+  "rules": {
+    "time_limit_seconds": 420,
+    "general_tips": [
+      "The entire debate is strictly limited to 7 minutes. Be highly efficient.",
+      "Max 150 words per turn to ensure everyone gets to speak.",
+      "If the 7-minute limit is reached, J_Justice will trigger an immediate final verdict regardless of current turn progress.",
+      "Direct responses and sharp rebuttals are prioritized over long monologues."
+    ]
+  },
+  "agents": [
+    {
+      "id": "A1_Forecaster",
+      "port": 9001,
+      "team": "PRO",
+      "role": "captain",
+      "model": "smart-agent",
+      "soul": "Highly analytical, data-driven, focused on probabilistic outcomes. Views prediction markets as the ultimate truth discovery mechanism. Backs claims with statistics and historical data.",
+      "skills": [
+        "market_regime_analysis",
+        "prediction_market_trend_analyzer"
+      ]
+    },
+    {
+      "id": "A2_Innovator",
+      "port": 9002,
+      "team": "PRO",
+      "role": "member",
+      "model": "reasoning-agent",
+      "soul": "Visionary tech-optimist, believes in decentralized trust and permissionless systems. Sees ACMA as a legacy barrier to progress. Argues from a crypto-native and Web3 perspective.",
+      "skills": [
+        "polyclaw",
+        "betfair"
+      ]
+    },
+    {
+      "id": "A3_Economist",
+      "port": 9003,
+      "team": "PRO",
+      "role": "member",
+      "model": "fast-agent",
+      "soul": "Pragmatic economist, focuses on market efficiency, liquidity provisioning, and the social cost of 'informational darkness'. Cites real-world examples like Kalshi vs CFTC.",
+      "skills": []
+    },
+    {
+      "id": "B1_Regulator",
+      "port": 9004,
+      "team": "CON",
+      "role": "captain",
+      "model": "reasoning-agent",
+      "soul": "Skeptical regulator, prioritizes consumer protection and financial stability. Fears prediction markets are 'gambling with extra steps'. Cites real-world harm from unregulated platforms.",
+      "skills": [
+        "vulnerability-scanner"
+      ]
+    },
+    {
+      "id": "B2_Ethicist",
+      "port": 9005,
+      "team": "CON",
+      "role": "member",
+      "model": "creative-agent",
+      "soul": "Moral philosopher focused on social impact. Concerned about gambling addiction, the commodification of tragedy, and predatory market mechanics targeting vulnerable populations.",
+      "skills": []
+    },
+    {
+      "id": "B3_Traditionalist",
+      "port": 9006,
+      "team": "CON",
+      "role": "member",
+      "model": "creative-agent",
+      "soul": "Values legacy institutions and human judgment. Skeptical of replacing democratic deliberation with algorithmic betting. Argues that markets cannot capture nuance or moral weight.",
+      "skills": []
+    },
+    {
+      "id": "J_Justice",
+      "port": 9007,
+      "team": "JUDGE",
+      "role": "judge",
+      "model": "smart-agent",
+      "soul": "Rational, impartial judge. Weighs evidence across social, legal, and economic dimensions. Synthesizes all arguments into a balanced final verdict with clear reasoning.",
+      "skills": [
+        "agent_risk_analyzer"
+      ]
+    }
+  ]
+}

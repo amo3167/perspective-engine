@@ -1,0 +1,77 @@
+{
+  "template_name": "technical_spike_consensus",
+  "description": "Cross-team technical spike with proposal, review, and governance — a classic architecture decision meeting.",
+
+  "roles": {
+    "facilitator": "meeting-facilitator",
+    "author": "lead-developer",
+    "architect": "platform-architect",
+    "reviewers": [
+      "backend-tech-lead",
+      "frontend-lead",
+      "sre-engineer"
+    ]
+  },
+
+  "phases": [
+    {
+      "id": "proposal",
+      "label": "Proposal",
+      "phase_number": 1,
+      "actor": "author",
+      "expected_type": "PROPOSAL_SUBMISSION",
+      "prompt": "Write the initial spike document for this topic:\n\nTOPIC: ${topic}\n\nUse the read_reference_file tool to read relevant reference documents.\n\nSubmit a PROPOSAL_SUBMISSION with a spike_document containing: ${proposal_sections_csv}."
+    },
+    {
+      "id": "discussion",
+      "label": "Facilitated Discussion",
+      "phase_number": 2,
+      "actor": "all_reviewers",
+      "participants": ["reviewers", "architect"],
+      "max_turns": 20
+    },
+    {
+      "id": "synthesis",
+      "label": "Synthesis",
+      "phase_number": 3,
+      "actor": "author",
+      "expected_type": "PROPOSAL_REVISION",
+      "prompt": "The discussion phase is complete. Read the full transcript and produce a PROPOSAL_REVISION that:\n1. Incorporates non-blocking suggestions\n2. Acknowledges agreements\n3. Offers explicit compromises for disagreements\n4. Flags any unresolved blockers for the Architect\n\nInclude updated_spike_document and feedback_addressed sections."
+    },
+    {
+      "id": "governance",
+      "label": "Governance",
+      "phase_number": 4,
+      "actor": "architect",
+      "expected_type": "ARCHITECT_APPROVAL",
+      "prompt": "The Lead Dev has submitted a revised proposal.\nRead the full transcript and issue your ARCHITECT_APPROVAL.\nDecision must be APPROVED, CONDITIONAL, or REJECTED.\nInclude rationale and conditions (if CONDITIONAL).",
+      "follow_up": {
+        "actor": "facilitator",
+        "expected_type": "MEETING_NOTES",
+        "prompt": "The meeting is now complete. Read the full transcript and produce MEETING_NOTES.\nInclude: executive_summary, key_objections, accepted_compromises, decisions, and audit_trail."
+      }
+    },
+    {
+      "id": "final_review",
+      "label": "Final Review",
+      "phase_number": 5,
+      "actor": "reviewer_llm",
+      "model": "smart-agent",
+      "expected_type": "FINAL_REVIEW"
+    }
+  ],
+
+  "proposal_sections": [
+    "problem_statement",
+    "proposed_solution",
+    "impact_areas",
+    "rollback_strategy",
+    "timeline"
+  ],
+
+  "context": "",
+
+  "agents": "profiles.json",
+  "prompts": "agent_prompts.json",
+  "schemas": "message_schemas.json"
+}

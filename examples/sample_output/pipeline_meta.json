@@ -1,0 +1,8 @@
+{
+  "meeting_id": "sample-meeting-001",
+  "timestamp": "2026-04-12T14:53:51",
+  "elapsed_seconds": 472.0,
+  "total_turns": 21,
+  "architect_decision": "CONDITIONAL",
+  "has_final_review": true
+}

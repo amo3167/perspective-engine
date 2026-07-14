@@ -1,0 +1,149 @@
+{
+  "_description": "Canonical JSON schemas for release strategy decision meeting.",
+  "COMMENT": {
+    "message_type": "COMMENT",
+    "points": ["one concise observation about perception, messaging, or risk — max 3 bullets"]
+  },
+  "AGREE": {
+    "message_type": "AGREE",
+    "points": ["what you agree with and why — max 3 bullets"]
+  },
+  "CHANGE_REQUEST": {
+    "message_type": "CHANGE_REQUEST",
+    "changes": [
+      {
+        "requirement": "what must change in the messaging or approach",
+        "justification": "why it matters — describe the perception risk",
+        "severity": "HIGH | MEDIUM | LOW"
+      }
+    ]
+  },
+  "DISAGREE": {
+    "message_type": "DISAGREE",
+    "severity": "HIGH | MEDIUM | LOW",
+    "blocker_description": "what messaging or approach is dangerous and why",
+    "required_changes": ["concrete action to fix the risk"]
+  },
+  "PROPOSAL_SUBMISSION": {
+    "message_type": "PROPOSAL_SUBMISSION",
+    "release_plan": {
+      "what_we_built": "honest description of the multi-agent simulation capability",
+      "value_proposition": "why sharing this benefits the company",
+      "perceived_risks": "acknowledge the replacing-humans fear honestly",
+      "proposed_audience": "who should see this first and why",
+      "messaging_strategy": "how to frame this as augmentation not replacement",
+      "rollout_approach": "staged plan for introducing the work",
+      "pros_and_cons": {
+        "if_we_share": ["positive outcomes of releasing — recognition, culture, collaboration"],
+        "if_it_goes_wrong": ["realistic downsides — misperception, executive misuse"],
+        "if_we_do_nothing": ["cost of inaction — work stays invisible, morale, missed opportunities"]
+      },
+      "future_vision": ["where this capability goes in 6-12 months — meeting prep, proposal stress-testing, onboarding, customer feedback simulation"],
+      "authors_recommendation": "your personal recommended approach with reasoning — not just options, but what you believe we should do and why",
+      "evidence": {
+        "what_it_proved": ["concrete results from actual runs — real insights surfaced, real concerns identified"],
+        "known_limitations": ["honest assessment of what doesn't work yet — circular arguments, synthesis failures, model constraints"]
+      }
+    }
+  },
+  "PROPOSAL_REVISION": {
+    "message_type": "PROPOSAL_REVISION",
+    "updated_release_plan": {
+      "what_we_built": "refined description with safer framing",
+      "value_proposition": "updated value prop addressing concerns",
+      "perceived_risks": "updated risk assessment with mitigations",
+      "proposed_audience": "revised audience and sequencing",
+      "messaging_strategy": "revised messaging incorporating feedback",
+      "rollout_approach": "updated rollout with safeguards",
+      "pros_and_cons": {
+        "if_we_share": ["updated positive outcomes incorporating feedback"],
+        "if_it_goes_wrong": ["updated downsides with mitigations"],
+        "if_we_do_nothing": ["updated cost of inaction"]
+      },
+      "future_vision": ["updated roadmap incorporating stakeholder input"],
+      "authors_recommendation": "updated personal recommendation incorporating all feedback",
+      "evidence": {
+        "what_it_proved": ["updated evidence incorporating discussion points"],
+        "known_limitations": ["updated limitations with proposed mitigations"]
+      }
+    },
+    "feedback_addressed": {
+      "messaging_changes": ["specific reframing adopted and why"],
+      "safeguards_added": ["concrete guardrail added to the plan"],
+      "concerns_acknowledged": ["fear or risk that was validated"],
+      "unresolved_risks": ["risk that remains open and proposed mitigation"]
+    }
+  },
+  "LEADERSHIP_DECISION": {
+    "message_type": "LEADERSHIP_DECISION",
+    "decision": "RELEASE | CONDITIONAL | HOLD",
+    "rationale": {
+      "strengths": ["what makes this worth sharing"],
+      "risks_accepted": ["risks we are choosing to accept"],
+      "conditions": ["requirement that must be met before release — only for CONDITIONAL"],
+      "recommended_messaging": ["specific language or framing to use"]
+    }
+  },
+  "MEETING_NOTES": {
+    "message_type": "MEETING_NOTES",
+    "executive_summary": "2-3 sentence summary of the discussion and decision",
+    "key_concerns": ["major fear or risk raised during discussion"],
+    "recommended_messaging": ["specific messaging recommendation"],
+    "leadership_decision": "the decision and its rationale",
+    "decisions": ["concrete decision made during the meeting"],
+    "action_items": ["concrete next step with owner"],
+    "risk_register": [
+      {
+        "risk": "what could go wrong",
+        "likelihood": "HIGH | MEDIUM | LOW",
+        "mitigation": "how to prevent or handle it"
+      }
+    ],
+    "audit_trail": [
+      {
+        "agent": "agent who took the action",
+        "action": "what they proposed or decided",
+        "outcome": "how the group responded"
+      }
+    ]
+  },
+  "FINAL_REVIEW": {
+    "message_type": "FINAL_REVIEW",
+    "overall_assessment": "2-3 sentence verdict on the meeting outcome quality",
+    "decision_quality": "Was the final decision sound? Is it appropriately cautious or too conservative? Be opinionated.",
+    "process_quality": {
+      "facilitator_effectiveness": "Did the facilitator manage flow well? Were silent agents drawn out? Were spirals caught?",
+      "agent_utilization": {
+        "turns_per_agent": {"agent-id": "N (X%)"},
+        "dominant": ["agent-id — reason"],
+        "underutilized": ["agent-id — reason"]
+      },
+      "discussion_balance": "Was the discussion balanced between risk and opportunity? Any echo chamber effects?"
+    },
+    "strengths": [
+      "specific thing the group got right — cite agent names and turn numbers"
+    ],
+    "blind_spots": [
+      "specific scenario, edge case, or consideration the group missed entirely"
+    ],
+    "meta_observations": "Recursive or self-referential patterns. Does the meeting's own process serve as evidence for/against its topic? Any ironic dynamics?",
+    "evidence_quality": {
+      "fabricated_or_suspicious": [
+        {"claim": "the specific claim or statistic", "agent": "who said it", "turn": 0, "concern": "why it's suspect"}
+      ],
+      "well_used": [
+        {"claim": "the specific claim", "agent": "who said it", "verdict": "why it's credible"}
+      ]
+    },
+    "recommendations": [
+      {
+        "action": "specific, actionable improvement — consolidate related items, max 4 total",
+        "owner": "who should do this",
+        "timing": "pre-execution | during-execution | post-execution",
+        "priority": "HIGH | MEDIUM | LOW"
+      }
+    ],
+    "confidence_score": "1-10 rating of how robust this decision is (10 = highly confident, ready to execute)",
+    "confidence_gap": "What specific actions would raise the confidence score by 1-2 points?"
+  }
+}

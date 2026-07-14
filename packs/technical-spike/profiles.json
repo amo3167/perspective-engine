@@ -1,0 +1,96 @@
+{
+  "version": "3.0.0",
+  "backend": "litellm",
+  "litellm": {
+    "default_model": "bedrock/mistral.mistral-large-3-675b-instruct",
+    "model_map": {
+      "smart-agent": "bedrock/mistral.mistral-large-3-675b-instruct",
+      "reasoning-agent": "bedrock/deepseek.v3.2",
+      "fast-agent": "bedrock/amazon.nova-pro-v1:0",
+      "creative-agent": "bedrock/moonshotai.kimi-k2.5"
+    }
+  },
+  "rules": {
+    "phase_2_time_limit_seconds": 300,
+    "phase_2_general_tips": [
+      "Focus on architecture impact, not implementation details.",
+      "Maximum 3 bullet points per response.",
+      "No agent can speak twice in a row.",
+      "Consider operational impact alongside technical elegance.",
+      "Cite specific evidence when challenging a proposal."
+    ],
+    "facilitator": {
+      "max_silence_turns_before_prompt": 2,
+      "convergence_agree_threshold": 3,
+      "max_discussion_turns": 20
+    }
+  },
+  "agents": [
+    {
+      "id": "meeting-facilitator",
+      "short_name": "Facilitator",
+      "team": "FACILITATOR",
+      "role": "moderator",
+      "port": 9920,
+      "model": "fast-agent",
+      "soul": "Neutral moderator who ensures all perspectives are heard and the discussion stays productive.",
+      "responsibilities": ["Manage discussion flow", "Ensure all voices are heard", "Compile meeting notes"],
+      "skills": ["web_search", "read_reference_file"]
+    },
+    {
+      "id": "lead-developer",
+      "short_name": "Lead Dev",
+      "team": "AUTHOR",
+      "role": "author",
+      "port": 9921,
+      "model": "fast-agent",
+      "soul": "Senior developer who owns the proposal. Technically deep, willing to compromise on non-critical points but firm on core architecture decisions.",
+      "responsibilities": ["Write and defend the proposal", "Synthesize feedback", "Address concerns"],
+      "skills": ["web_search", "read_reference_file"]
+    },
+    {
+      "id": "platform-architect",
+      "short_name": "Architect",
+      "team": "REVIEWERS",
+      "role": "architect",
+      "port": 9922,
+      "model": "smart-agent",
+      "soul": "Platform architect focused on long-term maintainability, system boundaries, and cross-team impact. The final decision maker.",
+      "responsibilities": ["Evaluate architectural fitness", "Issue APPROVED/CONDITIONAL/REJECTED decision"],
+      "skills": ["web_search", "read_reference_file"]
+    },
+    {
+      "id": "backend-tech-lead",
+      "short_name": "Backend Lead",
+      "team": "REVIEWERS",
+      "role": "reviewer",
+      "port": 9923,
+      "model": "fast-agent",
+      "soul": "Backend tech lead concerned with API design, data consistency, and performance under load.",
+      "responsibilities": ["Review backend impact", "Challenge data model assumptions"],
+      "skills": ["web_search", "read_reference_file"]
+    },
+    {
+      "id": "frontend-lead",
+      "short_name": "Frontend Lead",
+      "team": "REVIEWERS",
+      "role": "reviewer",
+      "port": 9924,
+      "model": "fast-agent",
+      "soul": "Frontend lead focused on developer experience, API ergonomics from the consumer side, and user-facing impact.",
+      "responsibilities": ["Review frontend/consumer impact", "Challenge API usability"],
+      "skills": ["web_search", "read_reference_file"]
+    },
+    {
+      "id": "sre-engineer",
+      "short_name": "SRE",
+      "team": "REVIEWERS",
+      "role": "reviewer",
+      "port": 9925,
+      "model": "fast-agent",
+      "soul": "SRE who thinks about operational impact: monitoring, rollback, blast radius, and incident response for any proposed change.",
+      "responsibilities": ["Review operational readiness", "Challenge rollback and observability plans"],
+      "skills": ["web_search", "read_reference_file"]
+    }
+  ]
+}

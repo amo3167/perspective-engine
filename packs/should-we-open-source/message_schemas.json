@@ -1,0 +1,137 @@
+{
+  "_description": "Canonical JSON schemas for the 'Should We Open-Source?' decision meeting.",
+  "COMMENT": {
+    "message_type": "COMMENT",
+    "points": ["one concise observation — max 3 bullets"]
+  },
+  "AGREE": {
+    "message_type": "AGREE",
+    "points": ["what you agree with and why — max 3 bullets"]
+  },
+  "CHANGE_REQUEST": {
+    "message_type": "CHANGE_REQUEST",
+    "changes": [
+      {
+        "requirement": "what must change",
+        "justification": "why it matters",
+        "severity": "HIGH | MEDIUM | LOW"
+      }
+    ]
+  },
+  "DISAGREE": {
+    "message_type": "DISAGREE",
+    "severity": "HIGH | MEDIUM | LOW",
+    "blocker_description": "what is dangerous and why",
+    "required_changes": ["concrete action to fix the risk"]
+  },
+  "PROPOSAL_SUBMISSION": {
+    "message_type": "PROPOSAL_SUBMISSION",
+    "release_plan": {
+      "what_we_built": "honest description of the capability",
+      "value_proposition": "why open-sourcing this benefits the community",
+      "perceived_risks": "honest risk assessment",
+      "proposed_audience": "who should see this first and why",
+      "messaging_strategy": "how to frame the release",
+      "rollout_approach": "staged plan for the release",
+      "pros_and_cons": {
+        "if_we_share": ["positive outcomes"],
+        "if_it_goes_wrong": ["realistic downsides"],
+        "if_we_do_nothing": ["cost of inaction"]
+      },
+      "future_vision": ["where this goes in 6-12 months"],
+      "authors_recommendation": "personal recommended approach with reasoning",
+      "evidence": {
+        "what_it_proved": ["concrete results from actual runs"],
+        "known_limitations": ["honest assessment of what doesn't work"]
+      }
+    }
+  },
+  "PROPOSAL_REVISION": {
+    "message_type": "PROPOSAL_REVISION",
+    "updated_release_plan": {
+      "what_we_built": "refined description",
+      "value_proposition": "updated value prop",
+      "perceived_risks": "updated risk assessment",
+      "proposed_audience": "revised audience",
+      "messaging_strategy": "revised messaging",
+      "rollout_approach": "updated rollout",
+      "pros_and_cons": {
+        "if_we_share": ["updated positives"],
+        "if_it_goes_wrong": ["updated downsides"],
+        "if_we_do_nothing": ["updated cost of inaction"]
+      },
+      "future_vision": ["updated roadmap"],
+      "authors_recommendation": "updated recommendation",
+      "evidence": {
+        "what_it_proved": ["updated evidence"],
+        "known_limitations": ["updated limitations"]
+      }
+    },
+    "feedback_addressed": {
+      "messaging_changes": ["reframing adopted"],
+      "safeguards_added": ["guardrail added"],
+      "concerns_acknowledged": ["risk validated"],
+      "unresolved_risks": ["risk that remains open"]
+    }
+  },
+  "LEADERSHIP_DECISION": {
+    "message_type": "LEADERSHIP_DECISION",
+    "decision": "RELEASE | CONDITIONAL | HOLD",
+    "rationale": {
+      "strengths": ["what makes this worth releasing"],
+      "risks_accepted": ["risks we accept"],
+      "conditions": ["requirement for CONDITIONAL"],
+      "recommended_messaging": ["specific framing to use"]
+    }
+  },
+  "MEETING_NOTES": {
+    "message_type": "MEETING_NOTES",
+    "executive_summary": "2-3 sentence summary",
+    "key_concerns": ["major risk raised"],
+    "recommended_messaging": ["messaging recommendation"],
+    "leadership_decision": "the decision and rationale",
+    "decisions": ["concrete decision"],
+    "action_items": ["next step with owner"],
+    "risk_register": [
+      {"risk": "what could go wrong", "likelihood": "HIGH | MEDIUM | LOW", "mitigation": "how to handle it"}
+    ],
+    "audit_trail": [
+      {"agent": "who", "action": "what they proposed", "outcome": "how group responded"}
+    ]
+  },
+  "FINAL_REVIEW": {
+    "message_type": "FINAL_REVIEW",
+    "overall_assessment": "2-3 sentence verdict on meeting outcome quality",
+    "decision_quality": "Was the decision sound? Be opinionated.",
+    "process_quality": {
+      "facilitator_effectiveness": "Did the facilitator manage flow well?",
+      "agent_utilization": {
+        "turns_per_agent": {"agent-id": "N (X%)"},
+        "dominant": ["agent-id — reason"],
+        "underutilized": ["agent-id — reason"]
+      },
+      "discussion_balance": "Was the discussion balanced between risk and opportunity?"
+    },
+    "strengths": ["specific thing the group got right — cite agent names and turns"],
+    "blind_spots": ["scenario or consideration the group missed"],
+    "meta_observations": "Recursive or self-referential patterns in the meeting",
+    "evidence_quality": {
+      "fabricated_or_suspicious": [
+        {"claim": "the claim", "agent": "who said it", "turn": 0, "concern": "why suspect"}
+      ],
+      "well_used": [
+        {"claim": "the claim", "agent": "who said it", "verdict": "why credible"}
+      ]
+    },
+    "recommendations": [
+      {
+        "action": "specific improvement — max 4 total",
+        "owner": "who should do this",
+        "timing": "pre-execution | during-execution | post-execution",
+        "priority": "HIGH | MEDIUM | LOW"
+      }
+    ],
+    "confidence_score": "1-10 rating",
+    "confidence_gap": "What would raise the score by 1-2 points?"
+  }
+}
