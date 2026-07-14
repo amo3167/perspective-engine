@@ -795,10 +795,37 @@ async def write_outputs(
     template_name: str = "meeting",
     review_content: dict | None = None,
 ):
-    os.makedirs(output_dir, exist_ok=True)
     mem_local = SharedMemory()
     data = await mem_local.get_context_ref(context_ref)
     transcript = data.get("transcript", []) if data else []
+    # Offload the blocking file writes to a worker thread so they never stall
+    # the event loop (and never issue synchronous open() inside a coroutine).
+    await asyncio.to_thread(
+        _write_outputs_sync,
+        output_dir,
+        transcript,
+        meeting_id,
+        governance,
+        start_time,
+        proposal_sections,
+        schemas,
+        template_name,
+        review_content,
+    )
+
+
+def _write_outputs_sync(
+    output_dir: str,
+    transcript: list,
+    meeting_id: str,
+    governance: dict,
+    start_time: float,
+    proposal_sections: list[str] | None,
+    schemas: dict | None,
+    template_name: str,
+    review_content: dict | None,
+) -> None:
+    os.makedirs(output_dir, exist_ok=True)
 
     with open(
         os.path.join(output_dir, "meeting_transcript.json"), "w", encoding="utf-8"
