@@ -11,6 +11,8 @@ import glob as glob_mod
 from pathlib import Path
 from typing import Any
 
+from engine.pathsafe import sanitize_for_log
+
 logger = logging.getLogger(__name__)
 
 ENGINE_DIR = Path(__file__).resolve().parent
@@ -198,7 +200,8 @@ def load_pack(
 
     if template_path.exists():
         logger.info(
-            f"Loaded meeting template: {template.get('template_name', 'unknown')}"
+            "Loaded meeting template: %s",
+            sanitize_for_log(template.get("template_name", "unknown")),
         )
 
     domain_handbook = ""

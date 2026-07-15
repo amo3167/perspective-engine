@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import asyncio
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -281,7 +282,7 @@ async def start_meeting(payload: dict | None = None):
     ts = datetime.now(timezone.utc).isoformat()
     banner = f"\n{'=' * 60}\n  Meeting — {ts}\n  topic={topic}\n  pack={pack_path}\n{'=' * 60}\n"
 
-    log_f = open(log_path, "a", encoding="utf-8")
+    log_f = await asyncio.to_thread(open, log_path, "a", encoding="utf-8")
     log_f.write(banner)
     log_f.flush()
 
@@ -293,7 +294,7 @@ async def start_meeting(payload: dict | None = None):
     if sys.platform != "win32":
         popen_kw["start_new_session"] = True
 
-    subprocess.Popen(cmd, **popen_kw)
+    await asyncio.to_thread(subprocess.Popen, cmd, **popen_kw)
     logger.info("Meeting subprocess started: %s", " ".join(cmd[:6]))
 
     meeting_state = {"status": "starting", "topic": topic, "transcript": [], "phase": 0}
@@ -416,11 +417,14 @@ async def debate_start():
     log_dir = PROJECT_ROOT / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / "debate_arena.log"
-    log_f = open(log_path, "a", encoding="utf-8")
+    log_f = await asyncio.to_thread(open, log_path, "a", encoding="utf-8")
 
     if cleanup_script.is_file():
-        subprocess.run(
-            [runner_py, str(cleanup_script)], capture_output=True, cwd=str(cwd)
+        await asyncio.to_thread(
+            subprocess.run,
+            [runner_py, str(cleanup_script)],
+            capture_output=True,
+            cwd=str(cwd),
         )
 
     env = os.environ.copy()
@@ -435,7 +439,7 @@ async def debate_start():
     if sys.platform != "win32":
         popen_kw["start_new_session"] = True
 
-    subprocess.Popen([runner_py, str(script_path)], **popen_kw)
+    await asyncio.to_thread(subprocess.Popen, [runner_py, str(script_path)], **popen_kw)
     log_f.close()
     logger.info("Debate subprocess started; log=%s", log_path)
     return {"status": "success", "message": "Debate session started in background"}
@@ -510,6 +514,11 @@ class ResearchStartRequest(BaseModel):
     dry_run: bool = False
 
 
+# Accepted values for the feedback-simulator CLI (mirrors its argparse choices).
+_ALLOWED_SIM_MODES = {"survey", "feedback"}
+_ALLOWED_SIM_BACKENDS = {"gemini", "minimax", "litellm", "bedrock"}
+
+
 def _is_bundled(path: Path) -> bool:
     """True when *path* lives inside this perspective-engine checkout."""
     return PROJECT_ROOT == path or PROJECT_ROOT in path.parents
@@ -555,6 +564,13 @@ async def research_start(req: ResearchStartRequest):
         f"{pe_public_base()}/api/monitor/feedback/broadcast",
     )
 
+    # Constrain the user-controlled command arguments to known-good values
+    # before they reach the subprocess (defence against argument injection).
+    if req.mode not in _ALLOWED_SIM_MODES:
+        return {"status": "error", "message": f"Invalid mode: {req.mode!r}"}
+    if req.backend not in _ALLOWED_SIM_BACKENDS:
+        return {"status": "error", "message": f"Invalid backend: {req.backend!r}"}
+
     runner_py = sys.executable if _is_bundled(script_path) else _monorepo_python()
     cmd = [
         runner_py,
@@ -581,7 +597,7 @@ async def research_start(req: ResearchStartRequest):
     ts = datetime.now(timezone.utc).isoformat()
     banner = f"\n{'=' * 72}\n[{ts}] Research Lab — subprocess\n  mode={req.mode} count={req.count}\n{'=' * 72}\n"
 
-    log_f = open(log_path, "a", encoding="utf-8")
+    log_f = await asyncio.to_thread(open, log_path, "a", encoding="utf-8")
     log_f.write(banner)
     log_f.flush()
 
@@ -593,7 +609,7 @@ async def research_start(req: ResearchStartRequest):
     if sys.platform != "win32":
         popen_kw["start_new_session"] = True
 
-    subprocess.Popen(cmd, **popen_kw)
+    await asyncio.to_thread(subprocess.Popen, cmd, **popen_kw)
     log_f.close()
 
     return {
@@ -673,7 +689,10 @@ async def delete_research_run(run_id: str):
 
 def main():
     port = int(os.environ.get("PE_SERVER_PORT", "8100"))
-    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")
+    # Bind to loopback by default; set PE_SERVER_HOST=0.0.0.0 to expose the
+    # server on all interfaces when that is explicitly intended.
+    host = os.environ.get("PE_SERVER_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port, log_level="info")
 
 
 if __name__ == "__main__":

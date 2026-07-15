@@ -73,10 +73,13 @@ async def start_nodes(
         ]
 
         log_path = os.path.join(agent_dir, f"{agent['id']}_stderr.log")
-        log_file = open(log_path, "a", encoding="utf-8")
+        # Open + spawn off the event loop; to_thread returns the real file
+        # handle / Popen object, so lifecycle calls (terminate/wait/kill) below
+        # keep working unchanged.
+        log_file = await asyncio.to_thread(open, log_path, "a", encoding="utf-8")
         env = os.environ.copy()
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.DEVNULL, stderr=log_file, env=env
+        proc = await asyncio.to_thread(
+            subprocess.Popen, cmd, stdout=subprocess.DEVNULL, stderr=log_file, env=env
         )
         processes.append(
             {
