@@ -814,6 +814,140 @@ async def write_outputs(
     )
 
 
+def _write_json(path: str, obj) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(obj, f, indent=2, default=str)
+
+
+def _write_text(path: str, text: str) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+
+
+def _coerce_summary(notes) -> str:
+    """Coerce an executive summary (str / list / nested dict) to a string."""
+    notes_md = ""
+    if notes:
+        if isinstance(notes, dict):
+            notes_md = notes.get("executive_summary", "")
+            if not notes_md:
+                notes_md = _extract_nested_field(notes, "executive_summary")
+        else:
+            notes_md = str(notes)
+    if isinstance(notes_md, list):
+        return "\n".join(f"- {x}" for x in notes_md)
+    if not isinstance(notes_md, str):
+        return str(notes_md) if notes_md else ""
+    return notes_md
+
+
+def _format_conditions(conditions: list) -> list[str]:
+    lines: list[str] = []
+    for c in conditions:
+        if isinstance(c, dict):
+            label = c.get("requirement", "") or c.get("id", "")
+            details = c.get("details", "") or c.get("description", "")
+            owner = c.get("owner", "TBD")
+            due = c.get("due_date", "TBD")
+            line = f"- **{label}** (owner: {owner}, due: {due})"
+            if details:
+                line += f": {details}"
+            lines.append(line)
+        else:
+            lines.append(f"- {c}")
+    return lines
+
+
+def _build_notes_md(meeting_id: str, governance: dict) -> str:
+    notes_md = _coerce_summary(governance.get("meeting_notes"))
+    arch_content = governance.get("architect_content", {}) or {}
+    parts = [
+        f"# Meeting Notes — {meeting_id}\n\n",
+        f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n",
+        f"**Architect Decision:** {governance.get('architect_decision', 'UNKNOWN')}\n\n",
+        "## Executive Summary\n\n",
+        (notes_md or "Meeting notes not available.") + "\n\n",
+    ]
+    rationale = arch_content.get("rationale", [])
+    if rationale:
+        parts.append("## Architect Rationale\n\n")
+        for r in rationale if isinstance(rationale, list) else [rationale]:
+            parts.append(f"- {r}\n")
+        parts.append("\n")
+    conditions = arch_content.get("conditions", [])
+    if conditions:
+        parts.append("## Conditions\n\n")
+        parts.extend(f"{line}\n" for line in _format_conditions(conditions))
+        parts.append("\n")
+    return "".join(parts)
+
+
+def _format_proposal_section(section: str, doc: dict) -> list[str]:
+    val = doc.get(section, "")
+    section_heading = section.replace("_", " ").title()
+    parts = [f"## {section_heading}\n\n"]
+    if isinstance(val, dict):
+        for sub_key, sub_val in val.items():
+            sub_heading = sub_key.replace("_", " ").title()
+            parts.append(f"### {sub_heading}\n\n")
+            if isinstance(sub_val, list):
+                parts.extend(f"- {item}\n" for item in sub_val)
+            else:
+                parts.append(f"{sub_val}\n")
+            parts.append("\n")
+    elif isinstance(val, list):
+        parts.extend(f"- {item}\n" for item in val)
+        parts.append("\n")
+    else:
+        parts.append(f"{val}\n\n")
+    return parts
+
+
+def _build_proposal_md(transcript, proposal_sections, schemas, template_name) -> str | None:
+    revision_entries = [
+        e for e in transcript if e.get("message_type") == "PROPOSAL_REVISION"
+    ]
+    if not revision_entries:
+        revision_entries = [
+            e
+            for e in transcript
+            if isinstance(e.get("content"), dict)
+            and e["content"].get("_original_expected_type") == "PROPOSAL_REVISION"
+        ]
+    if not revision_entries:
+        return None
+
+    schemas = schemas or {}
+    sections = proposal_sections or [
+        "problem_statement",
+        "proposed_solution",
+        "impact_areas",
+        "rollback_strategy",
+        "timeline",
+    ]
+
+    revision_key = _discover_proposal_key(schemas, "PROPOSAL_REVISION")
+    submission_key = _discover_proposal_key(schemas, "PROPOSAL_SUBMISSION")
+    lookup_keys = [k for k in (revision_key, submission_key) if k]
+    if not lookup_keys:
+        lookup_keys = ["updated_spike_document", "spike_document"]
+
+    final = revision_entries[-1].get("content", {})
+    doc = None
+    for k in lookup_keys:
+        doc = final.get(k)
+        if doc and isinstance(doc, dict):
+            break
+    if not doc or not isinstance(doc, dict):
+        doc = _try_extract_proposal_doc(final, proposal_keys=lookup_keys)
+
+    heading_label = template_name.replace("_", " ").title()
+    parts = [f"# {doc.get('title', heading_label + ' — Proposal')}\n\n"]
+    for section in sections:
+        parts.extend(_format_proposal_section(section, doc))
+    return "".join(parts)
+
+
 def _write_outputs_sync(
     output_dir: str,
     transcript: list,
@@ -826,119 +960,17 @@ def _write_outputs_sync(
     review_content: dict | None,
 ) -> None:
     os.makedirs(output_dir, exist_ok=True)
+    _write_json(os.path.join(output_dir, "meeting_transcript.json"), transcript)
+    _write_text(
+        os.path.join(output_dir, "meeting_notes.md"),
+        _build_notes_md(meeting_id, governance),
+    )
 
-    with open(
-        os.path.join(output_dir, "meeting_transcript.json"), "w", encoding="utf-8"
-    ) as f:
-        json.dump(transcript, f, indent=2, default=str)
-
-    notes = governance.get("meeting_notes")
-    notes_md = ""
-    if notes:
-        if isinstance(notes, dict):
-            notes_md = notes.get("executive_summary", "")
-            if not notes_md:
-                notes_md = _extract_nested_field(notes, "executive_summary")
-        else:
-            notes_md = str(notes)
-    # The LLM may return executive_summary as a list of bullets or a nested
-    # object; coerce to a string so the markdown concatenation below can't raise.
-    if isinstance(notes_md, list):
-        notes_md = "\n".join(f"- {x}" for x in notes_md)
-    elif not isinstance(notes_md, str):
-        notes_md = str(notes_md) if notes_md else ""
-    arch_content = governance.get("architect_content", {}) or {}
-    with open(os.path.join(output_dir, "meeting_notes.md"), "w", encoding="utf-8") as f:
-        f.write(f"# Meeting Notes — {meeting_id}\n\n")
-        f.write(f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
-        f.write(
-            f"**Architect Decision:** {governance.get('architect_decision', 'UNKNOWN')}\n\n"
-        )
-        f.write("## Executive Summary\n\n")
-        f.write((notes_md or "Meeting notes not available.") + "\n\n")
-        rationale = arch_content.get("rationale", [])
-        if rationale:
-            f.write("## Architect Rationale\n\n")
-            for r in rationale if isinstance(rationale, list) else [rationale]:
-                f.write(f"- {r}\n")
-            f.write("\n")
-        conditions = arch_content.get("conditions", [])
-        if conditions:
-            f.write("## Conditions\n\n")
-            for c in conditions:
-                if isinstance(c, dict):
-                    label = c.get("requirement", "") or c.get("id", "")
-                    details = c.get("details", "") or c.get("description", "")
-                    owner = c.get("owner", "TBD")
-                    due = c.get("due_date", "TBD")
-                    line = f"- **{label}** (owner: {owner}, due: {due})"
-                    if details:
-                        line += f": {details}"
-                    f.write(line + "\n")
-                else:
-                    f.write(f"- {c}\n")
-            f.write("\n")
-
-    revision_entries = [
-        e for e in transcript if e.get("message_type") == "PROPOSAL_REVISION"
-    ]
-    if not revision_entries:
-        revision_entries = [
-            e
-            for e in transcript
-            if isinstance(e.get("content"), dict)
-            and e["content"].get("_original_expected_type") == "PROPOSAL_REVISION"
-        ]
-    if revision_entries:
-        schemas = schemas or {}
-        sections = proposal_sections or [
-            "problem_statement",
-            "proposed_solution",
-            "impact_areas",
-            "rollback_strategy",
-            "timeline",
-        ]
-
-        revision_key = _discover_proposal_key(schemas, "PROPOSAL_REVISION")
-        submission_key = _discover_proposal_key(schemas, "PROPOSAL_SUBMISSION")
-        lookup_keys = [k for k in (revision_key, submission_key) if k]
-        if not lookup_keys:
-            lookup_keys = ["updated_spike_document", "spike_document"]
-
-        final = revision_entries[-1].get("content", {})
-        doc = None
-        for k in lookup_keys:
-            doc = final.get(k)
-            if doc and isinstance(doc, dict):
-                break
-        if not doc or not isinstance(doc, dict):
-            doc = _try_extract_proposal_doc(final, proposal_keys=lookup_keys)
-
-        heading_label = template_name.replace("_", " ").title()
-        with open(
-            os.path.join(output_dir, "proposal_final.md"), "w", encoding="utf-8"
-        ) as f:
-            f.write(f"# {doc.get('title', heading_label + ' — Proposal')}\n\n")
-            for section in sections:
-                val = doc.get(section, "")
-                section_heading = section.replace("_", " ").title()
-                f.write(f"## {section_heading}\n\n")
-                if isinstance(val, dict):
-                    for sub_key, sub_val in val.items():
-                        sub_heading = sub_key.replace("_", " ").title()
-                        f.write(f"### {sub_heading}\n\n")
-                        if isinstance(sub_val, list):
-                            for item in sub_val:
-                                f.write(f"- {item}\n")
-                        else:
-                            f.write(f"{sub_val}\n")
-                        f.write("\n")
-                elif isinstance(val, list):
-                    for item in val:
-                        f.write(f"- {item}\n")
-                    f.write("\n")
-                else:
-                    f.write(f"{val}\n\n")
+    proposal_md = _build_proposal_md(
+        transcript, proposal_sections, schemas, template_name
+    )
+    if proposal_md is not None:
+        _write_text(os.path.join(output_dir, "proposal_final.md"), proposal_md)
 
     if review_content and not review_content.get("error"):
         _write_final_review(output_dir, meeting_id, review_content)
@@ -952,10 +984,7 @@ def _write_outputs_sync(
         "architect_decision": governance.get("architect_decision"),
         "has_final_review": bool(review_content and not review_content.get("error")),
     }
-    with open(
-        os.path.join(output_dir, "pipeline_meta.json"), "w", encoding="utf-8"
-    ) as f:
-        json.dump(meta, f, indent=2)
+    _write_json(os.path.join(output_dir, "pipeline_meta.json"), meta)
 
     logger.info(f"Outputs written to {output_dir}")
 

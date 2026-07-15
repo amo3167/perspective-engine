@@ -569,9 +569,9 @@ async def research_start(req: ResearchStartRequest):
     # Constrain the user-controlled command arguments to known-good values
     # before they reach the subprocess (defence against argument injection).
     if req.mode not in _ALLOWED_SIM_MODES:
-        raise HTTPException(status_code=400, detail=f"Invalid mode: {req.mode!r}")
+        return {"status": "error", "message": f"Invalid mode: {req.mode!r}"}
     if req.backend not in _ALLOWED_SIM_BACKENDS:
-        raise HTTPException(status_code=400, detail=f"Invalid backend: {req.backend!r}")
+        return {"status": "error", "message": f"Invalid backend: {req.backend!r}"}
 
     runner_py = sys.executable if _is_bundled(script_path) else _monorepo_python()
     cmd = [
