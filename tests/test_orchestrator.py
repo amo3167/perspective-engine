@@ -81,3 +81,71 @@ def test_write_outputs_empty_governance_writes_placeholder(tmp_path, monkeypatch
 
     notes = (tmp_path / "out" / "meeting_notes.md").read_text(encoding="utf-8")
     assert "Meeting notes not available." in notes
+
+
+def test_write_outputs_renders_proposal_rationale_and_conditions(tmp_path, monkeypatch):
+    # Exercises the proposal_final.md path (dict/list/scalar sections) and the
+    # architect rationale + conditions (dict and non-dict) rendering.
+    async def no_redis(self):
+        return None
+
+    monkeypatch.setattr(orch.SharedMemory, "_get_redis", no_redis)
+
+    mem = orch.SharedMemory()
+    ref = _run(
+        mem.store_context_ref(
+            {
+                "transcript": [
+                    {
+                        "message_type": "PROPOSAL_REVISION",
+                        "content": {
+                            "spike_document": {
+                                "title": "Adopt X",
+                                "problem_statement": "We need X.",
+                                "proposed_solution": {
+                                    "approach": "Do X carefully",
+                                    "steps": ["step one", "step two"],
+                                },
+                                "impact_areas": ["latency", "cost"],
+                            }
+                        },
+                    }
+                ]
+            }
+        )
+    )
+
+    governance = {
+        "meeting_notes": "Plain summary text.",
+        "architect_decision": "APPROVE",
+        "architect_content": {
+            "rationale": ["clear win", "low risk"],
+            "conditions": [
+                {
+                    "requirement": "Add tests",
+                    "details": "cover new paths",
+                    "owner": "team",
+                    "due_date": "next week",
+                },
+                "Keep it simple",
+            ],
+        },
+    }
+
+    out_dir = str(tmp_path / "out")
+    _run(orch.write_outputs(ref, out_dir, "m3", governance, start_time=0.0))
+
+    proposal = (tmp_path / "out" / "proposal_final.md").read_text(encoding="utf-8")
+    assert "# Adopt X" in proposal
+    assert "## Problem Statement" in proposal
+    assert "We need X." in proposal
+    assert "### Approach" in proposal  # dict section, scalar sub-value
+    assert "- step one" in proposal  # dict section, list sub-value
+    assert "- latency" in proposal  # list section
+
+    notes = (tmp_path / "out" / "meeting_notes.md").read_text(encoding="utf-8")
+    assert "Plain summary text." in notes  # string summary
+    assert "## Architect Rationale" in notes
+    assert "- clear win" in notes
+    assert "**Add tests**" in notes  # dict condition
+    assert "- Keep it simple" in notes  # non-dict condition
