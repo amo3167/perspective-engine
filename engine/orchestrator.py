@@ -903,7 +903,9 @@ def _format_proposal_section(section: str, doc: dict) -> list[str]:
     return parts
 
 
-def _build_proposal_md(transcript, proposal_sections, schemas, template_name) -> str | None:
+def _build_proposal_md(
+    transcript, proposal_sections, schemas, template_name
+) -> str | None:
     revision_entries = [
         e for e in transcript if e.get("message_type") == "PROPOSAL_REVISION"
     ]

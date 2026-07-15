@@ -439,9 +439,7 @@ async def debate_start():
     if sys.platform != "win32":
         popen_kw["start_new_session"] = True
 
-    await asyncio.to_thread(
-        subprocess.Popen, [runner_py, str(script_path)], **popen_kw
-    )
+    await asyncio.to_thread(subprocess.Popen, [runner_py, str(script_path)], **popen_kw)
     log_f.close()
     logger.info("Debate subprocess started; log=%s", log_path)
     return {"status": "success", "message": "Debate session started in background"}
