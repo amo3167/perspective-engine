@@ -4,7 +4,13 @@ import asyncio
 import os
 
 import engine.orchestrator as orch
-from engine.orchestrator import _resolve_architect_port
+from engine.orchestrator import (
+    _discover_proposal_key,
+    _extract_nested_field,
+    _render_item,
+    _resolve_architect_port,
+    _try_extract_proposal_doc,
+)
 
 
 def _run(coro):
@@ -149,3 +155,35 @@ def test_write_outputs_renders_proposal_rationale_and_conditions(tmp_path, monke
     assert "- clear win" in notes
     assert "**Add tests**" in notes  # dict condition
     assert "- Keep it simple" in notes  # non-dict condition
+
+
+def test_extract_nested_field_from_dict_and_list():
+    assert _extract_nested_field({"a": {"summary": "S"}}, "summary") == "S"
+    assert _extract_nested_field({"a": ['{"summary": "S"}']}, "summary") == "S"
+    assert _extract_nested_field({"a": {"other": 1}}, "summary") == ""
+
+
+def test_discover_proposal_key_picks_structured_key():
+    schemas = {
+        "PROPOSAL_REVISION": {
+            "message_type": "PROPOSAL_REVISION",
+            "my_doc": {"title": {}, "body": {}},
+        }
+    }
+    assert _discover_proposal_key(schemas, "PROPOSAL_REVISION") == "my_doc"
+    assert _discover_proposal_key({}, "PROPOSAL_REVISION") is None
+
+
+def test_try_extract_proposal_doc_from_points_and_fallback():
+    content = {"points": ['{"updated_spike_document": {"title": "T", "body": "B"}}']}
+    assert _try_extract_proposal_doc(content) == {"title": "T", "body": "B"}
+    absent = {"points": ["no json here"]}
+    assert _try_extract_proposal_doc(absent) is absent
+
+
+def test_render_item_variants():
+    assert _render_item("plain") == "plain"
+    out = _render_item({"description": "Do X", "agents": ["a1", "a2"]})
+    assert "Do X" in out and "Agents: a1, a2" in out
+    assert _render_item({}) == "{}"
+    assert _render_item(5) == "5"
