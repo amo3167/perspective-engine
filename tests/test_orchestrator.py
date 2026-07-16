@@ -187,3 +187,62 @@ def test_render_item_variants():
     assert "Do X" in out and "Agents: a1, a2" in out
     assert _render_item({}) == "{}"
     assert _render_item(5) == "5"
+
+
+def test_write_outputs_renders_final_review(tmp_path, monkeypatch):
+    # review_content present → write_outputs also emits final_review.md, exercising
+    # _write_final_review / _write_evidence_section across their many shapes.
+    async def no_redis(self):
+        return None
+
+    monkeypatch.setattr(orch.SharedMemory, "_get_redis", no_redis)
+    mem = orch.SharedMemory()
+    ref = _run(mem.store_context_ref({"transcript": []}))
+
+    review_content = {
+        "overall_assessment": "Sound decision.",
+        "decision_quality": {"score": "high"},
+        "process_quality": {
+            "facilitator_effectiveness": "good",
+            "agent_utilization": {"agent-x": "31%", "detail": {"turns": 5}},
+            "discussion_balance": ["balanced", "diverse"],
+        },
+        "meta_observations": "recursive pattern noted",
+        "strengths": [
+            "clear scope",
+            {"description": "good analysis", "agents": ["a1"]},
+        ],
+        "blind_spots": ["edge cases"],
+        "recommendations": [{"action": "add tests", "timing": "post"}],
+        "evidence_quality": {
+            "fabricated_or_suspicious": [
+                {
+                    "claim": "99% uptime",
+                    "agent": "a1",
+                    "turn": 3,
+                    "concern": "unverified",
+                }
+            ],
+        },
+        "confidence_score": 7,
+        "confidence_gap": "more data would help",
+    }
+
+    out_dir = str(tmp_path / "out")
+    _run(
+        orch.write_outputs(
+            ref,
+            out_dir,
+            "m4",
+            {"architect_decision": "APPROVE"},
+            start_time=0.0,
+            review_content=review_content,
+        )
+    )
+
+    review = (tmp_path / "out" / "final_review.md").read_text(encoding="utf-8")
+    assert "# Final Review — m4" in review
+    assert "## Overall Assessment" in review and "Sound decision." in review
+    assert "## Process Quality" in review
+    assert "## Evidence Quality" in review and "99% uptime" in review
+    assert "**7/10**" in review

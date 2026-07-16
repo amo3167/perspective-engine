@@ -1,6 +1,7 @@
 """node.py pure parsing/validation helpers for (messy) LLM output."""
 
 from engine.node import (
+    _detect_repetition,
     _extract_nested_json_from_points,
     _format_transcript_for_prompt,
     _normalize_field_aliases,
@@ -108,3 +109,22 @@ def test_format_transcript_renders_string_and_dict_content():
     assert "[alice] (COMMENT): hello" in out
     assert "[bob] (AGREE):" in out
     assert '"points"' in out  # dict content was json-encoded
+
+
+def test_detect_repetition_warns_on_circular_themes():
+    entries = [{"content": "blocker latency scalability"} for _ in range(6)]
+    assert "CONVERGENCE WARNING" in _detect_repetition(entries)
+
+
+def test_detect_repetition_reads_dict_points():
+    entries = [
+        {"content": {"points": ["blocker latency scalability concern"]}}
+        for _ in range(6)
+    ]
+    assert "CONVERGENCE WARNING" in _detect_repetition(entries)
+
+
+def test_detect_repetition_empty_for_short_or_varied():
+    assert _detect_repetition([{"content": "x"}] * 3) == ""  # fewer than 6 entries
+    varied = [{"content": f"unique{i} distinct{i} separate{i}"} for i in range(6)]
+    assert _detect_repetition(varied) == ""  # no theme repeats often enough
